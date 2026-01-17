@@ -2,117 +2,455 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Funko Plunko</title>
   <style>
-    body {
-      background: transparent;
+    :root{
+      --bg: rgba(0,0,0,0);        /* transparent for OBS */
+      --panel: rgba(10,10,10,.92);
+      --panelBorder: rgba(255,255,255,.08);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.65);
+      --peg: rgba(255,255,255,.22);
+      --pegGlow: rgba(255, 211, 77, .35);
+      --accent: #ffd34d;          /* Pop-n-Play-ish gold */
+      --accent2: #ff4d7d;         /* pink pop */
+      --slot: rgba(255,255,255,.12);
+      --slotActive: rgba(255,211,77,.85);
+      --danger: rgba(255,77,125,.9);
+      --ok: rgba(122,255,196,.9);
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
       margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      font-family: Arial, sans-serif;
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--text);
+    }
+
+    .wrap {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 18px;
     }
 
     .board {
-      width: 500px;
-      height: 700px;
-      background: #111;
-      border-radius: 20px;
-      padding: 20px;
-      box-sizing: border-box;
+      width: 520px;
+      height: 760px;
+      background: radial-gradient(1200px 900px at 70% 15%, rgba(255,211,77,.10), transparent 55%),
+                  radial-gradient(900px 700px at 25% 35%, rgba(255,77,125,.10), transparent 55%),
+                  linear-gradient(180deg, rgba(25,25,25,.98), rgba(10,10,10,.92));
+      border: 1px solid var(--panelBorder);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
       position: relative;
+      overflow: hidden;
     }
 
-    .slots {
+    /* subtle “glass” sheen */
+    .board::before{
+      content:"";
+      position:absolute;
+      inset:-80px -120px auto -120px;
+      height: 180px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+      transform: rotate(12deg);
+      pointer-events:none;
+    }
+
+    .header {
       position: absolute;
-      bottom: 20px;
-      width: 100%;
+      top: 16px;
+      left: 16px;
+      right: 16px;
       display: flex;
-      justify-content: space-between;
-      padding: 0 20px;
-      box-sizing: border-box;
-    }
-
-    .slot {
-      width: 50px;
-      height: 50px;
-      background: #333;
-      border-radius: 10px;
-      color: #fff;
-      display: flex;
-      justify-content: center;
       align-items: center;
-      font-size: 20px;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 5;
     }
 
-    .slot.hit {
-      background: gold;
-      color: #000;
-      box-shadow: 0 0 20px gold;
+    .brand {
+      display:flex;
+      flex-direction: column;
+      gap: 2px;
     }
 
-    .ball {
-      width: 20px;
-      height: 20px;
-      background: red;
+    .brand .title {
+      font-weight: 900;
+      letter-spacing: .6px;
+      font-size: 22px;
+      line-height: 1.1;
+      text-transform: uppercase;
+    }
+
+    .brand .title .plunko {
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .brand .sub {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: .25px;
+    }
+
+    .controls {
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.10);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 800;
+      letter-spacing: .4px;
+      transition: transform .08s ease, background .2s ease, border-color .2s ease;
+      user-select:none;
+    }
+
+    button:hover { background: rgba(255,255,255,.14); }
+    button:active { transform: translateY(1px) scale(.99); }
+
+    .drop {
+      background: linear-gradient(180deg, rgba(255,211,77,.95), rgba(255,154,60,.95));
+      border-color: rgba(0,0,0,.25);
+      color: rgba(0,0,0,.9);
+      box-shadow: 0 10px 30px rgba(255,211,77,.20);
+    }
+
+    .drop:hover { filter: brightness(1.02); }
+
+    .legend {
+      position:absolute;
+      top: 68px;
+      left: 16px;
+      right: 16px;
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      z-index: 5;
+    }
+
+    .pill {
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      font-size: 12px;
+      color: rgba(255,255,255,.86);
+      backdrop-filter: blur(6px);
+    }
+
+    .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255,211,77,.18);
+    }
+    .dot.pink { background: var(--accent2); box-shadow: 0 0 0 3px rgba(255,77,125,.18); }
+    .dot.green { background: var(--ok); box-shadow: 0 0 0 3px rgba(122,255,196,.16); }
+
+    /* playfield */
+    .field {
+      position:absolute;
+      top: 120px;
+      left: 22px;
+      right: 22px;
+      bottom: 110px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.08);
+      background:
+        radial-gradient(900px 600px at 50% 0%, rgba(255,255,255,.06), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.55));
+      overflow: hidden;
+    }
+
+    /* pegs layer */
+    .pegs {
+      position:absolute;
+      inset: 0;
+      pointer-events:none;
+    }
+
+    .peg {
+      position:absolute;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), rgba(255,255,255,.12));
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.10),
+        0 0 18px var(--pegGlow);
+      opacity: .9;
+    }
+
+    /* little “rails” on the sides */
+    .rail {
+      position:absolute;
+      top: 0; bottom: 0;
+      width: 10px;
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
+      filter: blur(.2px);
+      opacity: .55;
+    }
+    .rail.left { left: 0; }
+    .rail.right { right: 0; }
+
+    /* ball */
+    .ball {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.85), rgba(255,77,125,.85));
       position: absolute;
       top: 10px;
       left: 50%;
       transform: translateX(-50%);
-      transition: top 2s ease, left 2s ease;
+      opacity: 0;
+      box-shadow: 0 10px 24px rgba(0,0,0,.35), 0 0 25px rgba(255,77,125,.25);
+      z-index: 4;
     }
 
-    button {
-      position: absolute;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
+    /* slots */
+    .slots {
+      position:absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 18px;
+      display:flex;
+      gap: 10px;
+      justify-content: space-between;
+      z-index: 6;
+    }
+
+    .slot {
+      flex: 1;
+      height: 58px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.08);
+      display:grid;
+      place-items:center;
+      font-weight: 900;
+      font-size: 18px;
+      color: rgba(255,255,255,.86);
+      position: relative;
+      overflow: hidden;
+      transition: transform .15s ease, background .15s ease, color .15s ease, box-shadow .15s ease;
+    }
+
+    .slot::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: radial-gradient(60px 40px at 50% 20%, rgba(255,255,255,.20), transparent 60%);
+      opacity:.35;
+      pointer-events:none;
+    }
+
+    .slot[data-type="odd"] { border-color: rgba(122,255,196,.18); }
+    .slot[data-type="sticker"] { border-color: rgba(255,211,77,.18); }
+    .slot[data-type="bigwin"] { border-color: rgba(255,77,125,.28); }
+
+    .slot.active {
+      background: rgba(255,211,77,.85);
+      color: rgba(0,0,0,.9);
+      box-shadow: 0 18px 40px rgba(255,211,77,.22);
+      transform: translateY(-2px);
+    }
+
+    /* small footer hint */
+    .footer {
+      position:absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 86px;
+      display:flex;
+      justify-content: space-between;
+      color: rgba(255,255,255,.55);
+      font-size: 12px;
+      z-index: 5;
+    }
+    .footer b { color: rgba(255,255,255,.78); font-weight: 800; }
+
+    /* responsive for different OBS sizes */
+    @media (max-width: 560px){
+      .board{ width: 92vw; height: 140vw; max-height: 760px; }
     }
   </style>
 </head>
+
 <body>
+  <div class="wrap">
+    <div class="board" id="board">
+      <div class="header">
+        <div class="brand">
+          <div class="title">Funko <span class="plunko">Plunko</span></div>
+          <div class="sub">Pop n Play • Live Show Drop</div>
+        </div>
+        <div class="controls">
+          <button class="drop" id="dropBtn">DROP</button>
+        </div>
+      </div>
 
-<div class="board">
-  <button onclick="dropBall()">DROP</button>
-  <div id="ball" class="ball"></div>
+      <div class="legend">
+        <span class="pill"><span class="dot green"></span><b>Odd</b> = Enamel Pin</span>
+        <span class="pill"><span class="dot"></span><b>2 &amp; 6</b> = Stickers</span>
+        <span class="pill"><span class="dot pink"></span><b>4</b> = BIG WIN (Funko Pop)</span>
+      </div>
 
-  <div class="slots">
-    <div class="slot">1</div>
-    <div class="slot">2</div>
-    <div class="slot">3</div>
-    <div class="slot">4</div>
-    <div class="slot">5</div>
-    <div class="slot">6</div>
-    <div class="slot">7</div>
+      <div class="field" id="field">
+        <div class="rail left"></div>
+        <div class="rail right"></div>
+
+        <div class="pegs" id="pegs"></div>
+        <div class="ball" id="ball"></div>
+      </div>
+
+      <div class="footer">
+        <span>Tip: in OBS you can right-click source → <b>Interact</b> to click DROP.</span>
+        <span><b>Transparent</b> background ready</span>
+      </div>
+
+      <div class="slots" id="slots">
+        <div class="slot" data-slot="1" data-type="odd">1</div>
+        <div class="slot" data-slot="2" data-type="sticker">2</div>
+        <div class="slot" data-slot="3" data-type="odd">3</div>
+        <div class="slot" data-slot="4" data-type="bigwin">4</div>
+        <div class="slot" data-slot="5" data-type="odd">5</div>
+        <div class="slot" data-slot="6" data-type="sticker">6</div>
+        <div class="slot" data-slot="7" data-type="odd">7</div>
+      </div>
+    </div>
   </div>
-</div>
 
-<script>
-  function dropBall() {
-    const ball = document.getElementById("ball");
-    const slots = document.querySelectorAll(".slot");
+  <script>
+    // ---------- Visual Peg Layout (no physics changes yet) ----------
+    const pegsEl = document.getElementById('pegs');
+    const fieldEl = document.getElementById('field');
+    const slotsEl = document.getElementById('slots');
+    const dropBtn = document.getElementById('dropBtn');
+    const ball = document.getElementById('ball');
+    const slotEls = [...document.querySelectorAll('.slot')];
 
-    slots.forEach(slot => slot.classList.remove("hit"));
+    function buildPegs(){
+      pegsEl.innerHTML = '';
+      const w = fieldEl.clientWidth;
+      const h = fieldEl.clientHeight;
 
-    const target = Math.floor(Math.random() * 7);
-    const targetSlot = slots[target];
+      // rows & spacing tuned for “looks like plinko”
+      const rows = 10;
+      const topPad = 40;
+      const bottomPad = 80;
+      const usableH = h - topPad - bottomPad;
 
-    const leftPos = targetSlot.offsetLeft + 15;
-    const topPos = 600;
+      for (let r = 0; r < rows; r++){
+        const y = topPad + (usableH * (r / (rows - 1)));
+        const count = (r % 2 === 0) ? 8 : 7;          // staggered rows
+        const xPad = 26 + (r % 2 === 0 ? 0 : 18);
+        const usableW = w - (xPad * 2);
+        for (let c = 0; c < count; c++){
+          const x = xPad + (usableW * (c / (count - 1)));
+          const peg = document.createElement('div');
+          peg.className = 'peg';
+          peg.style.left = `${x}px`;
+          peg.style.top = `${y}px`;
+          peg.style.transform = 'translate(-50%,-50%)';
+          pegsEl.appendChild(peg);
+        }
+      }
+    }
 
-    ball.style.left = leftPos + "px";
-    ball.style.top = topPos + "px";
+    // ---------- Existing simple drop behavior (kept) ----------
+    // NOTE: We'll improve "feel" later. For now: keep your straight-line drop to a chosen slot.
+    function clearActiveSlots(){
+      slotEls.forEach(el => el.classList.remove('active'));
+    }
 
-    setTimeout(() => {
-      targetSlot.classList.add("hit");
-    }, 2000);
-  }
-</script>
+    function highlightSlot(n){
+      clearActiveSlots();
+      const el = slotEls.find(s => s.dataset.slot === String(n));
+      if (el) el.classList.add('active');
+    }
 
+    // pick a slot randomly (equal odds) - can be weighted later if you want
+    function pickSlot(){
+      return Math.floor(Math.random() * 7) + 1;
+    }
+
+    let animating = false;
+
+    function drop(){
+      if (animating) return;
+      animating = true;
+      clearActiveSlots();
+
+      const slot = pickSlot();
+
+      // start ball near top center
+      ball.style.opacity = '1';
+      ball.style.top = '14px';
+      ball.style.left = '50%';
+      ball.style.transform = 'translateX(-50%)';
+      ball.style.transition = 'none';
+
+      // end point roughly above chosen slot
+      const slotEl = slotEls.find(s => s.dataset.slot === String(slot));
+      const fieldRect = fieldEl.getBoundingClientRect();
+      const slotRect = slotEl.getBoundingClientRect();
+
+      const endX = (slotRect.left + slotRect.width/2) - fieldRect.left;
+      const endY = fieldEl.clientHeight - 34;
+
+      // animate
+      requestAnimationFrame(() => {
+        ball.style.transition = 'top 1.15s cubic-bezier(.2,.9,.2,1), left 1.15s cubic-bezier(.2,.9,.2,1)';
+        ball.style.left = `${endX}px`;
+        ball.style.top = `${endY}px`;
+      });
+
+      setTimeout(() => {
+        highlightSlot(slot);
+
+        // little “win” emphasis just visually (feel stays same)
+        if (slot === 4){
+          slotEl.style.boxShadow = '0 0 0 2px rgba(255,77,125,.35), 0 18px 55px rgba(255,77,125,.20)';
+          setTimeout(() => slotEl.style.boxShadow = '', 800);
+        }
+
+        // fade ball out after landing
+        setTimeout(() => {
+          ball.style.opacity = '0';
+          animating = false;
+        }, 550);
+
+      }, 1200);
+    }
+
+    dropBtn.addEventListener('click', drop);
+
+    // rebuild pegs on load + resize (OBS resizing)
+    window.addEventListener('load', buildPegs);
+    window.addEventListener('resize', () => {
+      // small debounce
+      clearTimeout(window.__pegTimer);
+      window.__pegTimer = setTimeout(buildPegs, 120);
+    });
+  </script>
 </body>
 </html>

@@ -368,7 +368,32 @@
     const dropBtn = document.getElementById('dropBtn');
     const ball = document.getElementById('ball');
     const slotEls = [...document.querySelectorAll('.slot')];
+// ---------- Step 2: Plinko-style motion helpers ----------
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeInOutCubic = (t) =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
+function makeNudges(count = 3) {
+  const nudges = [];
+  for (let i = 0; i < count; i++) {
+    nudges.push({
+      t0: 0.18 + Math.random() * 0.62,
+      amp: (Math.random() * 2 - 1) * 26,
+      width: 0.06 + Math.random() * 0.07
+    });
+  }
+  return nudges;
+}
+
+function nudgeOffset(t, nudges) {
+  let x = 0;
+  for (const n of nudges) {
+    const d = (t - n.t0) / n.width;
+    x += n.amp * Math.exp(-d * d);
+  }
+  return x;
+}
     function buildPegs(){
       pegsEl.innerHTML = '';
       const w = fieldEl.clientWidth;
@@ -438,12 +463,37 @@
       const endX = (slotRect.left + slotRect.width/2) - fieldRect.left;
       const endY = fieldEl.clientHeight - 34;
 
-      // animate
-      requestAnimationFrame(() => {
-        ball.style.transition = 'top 1.15s cubic-bezier(.2,.9,.2,1), left 1.15s cubic-bezier(.2,.9,.2,1)';
-        ball.style.left = `${endX}px`;
-        ball.style.top = `${endY}px`;
-      });
+// animate (plinko-ish wobble, still lands in chosen slot)
+const duration = 1150; // ms
+const start = performance.now();
+const startX = fieldEl.clientWidth * 0.5;
+const startY = 14;
+
+const nudges = makeNudges(3); // uses helper you added
+
+ball.style.transition = 'none';
+
+function tick(now){
+  const t = clamp((now - start) / duration, 0, 1);
+  const e = easeInOutCubic(t);
+
+  // base path toward end point
+  const baseX = lerp(startX, endX, e);
+  const baseY = lerp(startY, endY, e);
+
+  // sideways wobble that fades out as it nears the bottom
+  const wobble = nudgeOffset(t, nudges) * (1 - t);
+
+  // apply
+  ball.style.left = `${baseX + wobble}px`;
+  ball.style.top  = `${baseY}px`;
+
+  if (t < 1) {
+    requestAnimationFrame(tick);
+  }
+}
+
+requestAnimationFrame(tick);
 
       setTimeout(() => {
         highlightSlot(slot);

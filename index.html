@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Funko Plunko</title>
+  <style>
+    body {
+      background: transparent;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+    }
+
+    .board {
+      width: 500px;
+      height: 700px;
+      background: #111;
+      border-radius: 20px;
+      padding: 20px;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    .slots {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 20px;
+      box-sizing: border-box;
+    }
+
+    .slot {
+      width: 50px;
+      height: 50px;
+      background: #333;
+      border-radius: 10px;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 20px;
+    }
+
+    .slot.hit {
+      background: gold;
+      color: #000;
+      box-shadow: 0 0 20px gold;
+    }
+
+    .ball {
+      width: 20px;
+      height: 20px;
+      background: red;
+      border-radius: 50%;
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      transition: top 2s ease, left 2s ease;
+    }
+
+    button {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="board">
+  <button onclick="dropBall()">DROP</button>
+  <div id="ball" class="ball"></div>
+
+  <div class="slots">
+    <div class="slot">1</div>
+    <div class="slot">2</div>
+    <div class="slot">3</div>
+    <div class="slot">4</div>
+    <div class="slot">5</div>
+    <div class="slot">6</div>
+    <div class="slot">7</div>
+  </div>
+</div>
+
+<script>
+  function dropBall() {
+    const ball = document.getElementById("ball");
+    const slots = document.querySelectorAll(".slot");
+
+    slots.forEach(slot => slot.classList.remove("hit"));
+
+    const target = Math.floor(Math.random() * 7);
+    const targetSlot = slots[target];
+
+    const leftPos = targetSlot.offsetLeft + 15;
+    const topPos = 600;
+
+    ball.style.left = leftPos + "px";
+    ball.style.top = topPos + "px";
+
+    setTimeout(() => {
+      targetSlot.classList.add("hit");
+    }, 2000);
+  }
+</script>
+
+</body>
+</html>

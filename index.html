@@ -488,7 +488,7 @@ points.push({ x: startX, y: startY });
 for (let r = 1; r <= rows; r++) {
   const t = r / rows;
   const targetX = lerp(startX, endX, t);
-  const kick = (1 - t) * (22 + Math.random() * 18);
+  const kick = (1 - t) * (8 + Math.random() * 6);
   const dir = Math.random() < 0.5 ? -1 : 1;
 
   const x = clamp(
@@ -524,10 +524,10 @@ function tick(now){
   const x = lerp(p0.x, p1.x, easeInOutCubic(localT));
   let y = lerp(p0.y, p1.y, localT);
 
-// micro "peg hit" bounce: small bump per segment, fades as it falls
-const segT = seg / (points.length - 2); // 0..1-ish (ignores last landing point)
-const bounceAmp = (1 - segT) * 10 + 2;  // bigger up top, smaller near bottom
-y += Math.sin(localT * Math.PI) * bounceAmp;
+// peg-hit bounce (short, punchy, fades downward)
+const pegEnergy = Math.max(0, 1 - seg / (points.length - 1));
+const hit = Math.sin(localT * Math.PI);
+y += hit * pegEnergy * 12;
 
   ball.style.left = `${x}px`;
   ball.style.top  = `${y}px`;

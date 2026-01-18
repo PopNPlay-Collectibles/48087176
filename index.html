@@ -519,8 +519,13 @@ function tick(now){
   const p0 = points[seg];
   const p1 = points[seg + 1];
 
-  const x = lerp(p0.x, p1.x, easeOutBack(localT));
-  const y = lerp(p0.y, p1.y, localT);
+  const x = lerp(p0.x, p1.x, easeInOutCubic(localT));
+  let y = lerp(p0.y, p1.y, localT);
+
+// micro "peg hit" bounce: small bump per segment, fades as it falls
+const segT = seg / (points.length - 2); // 0..1-ish (ignores last landing point)
+const bounceAmp = (1 - segT) * 10 + 2;  // bigger up top, smaller near bottom
+y += Math.sin(localT * Math.PI) * bounceAmp;
 
   ball.style.left = `${x}px`;
   ball.style.top  = `${y}px`;
@@ -532,22 +537,22 @@ requestAnimationFrame(tick);
 
 requestAnimationFrame(tick);
 
-      setTimeout(() => {
-        highlightSlot(slot);
+setTimeout(() => {
+  highlightSlot(slot);
 
-        // little “win” emphasis just visually (feel stays same)
-        if (slot === 4){
-          slotEl.style.boxShadow = '0 0 0 2px rgba(255,77,125,.35), 0 18px 55px rgba(255,77,125,.20)';
-          setTimeout(() => slotEl.style.boxShadow = '', 800);
-        }
+  // little "win" emphasis just visually (feel stays same)
+  if (slot === 4){
+    slotEl.style.boxShadow = '0 0 0 2px rgba(255,77,125,.35), 0 18px 55px rgba(255,77,125,.20)';
+    setTimeout(() => slotEl.style.boxShadow = '', 800);
+  }
 
-        // fade ball out after landing
-        setTimeout(() => {
-          ball.style.opacity = '0';
-          animating = false;
-        }, 550);
+  // fade ball out after landing
+  setTimeout(() => {
+    ball.style.opacity = '0';
+    animating = false;
+  }, 600);
 
-      }, 1200);
+}, duration + 120);
     }
 
     dropBtn.addEventListener('click', drop);

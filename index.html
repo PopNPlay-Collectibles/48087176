@@ -463,35 +463,72 @@ function nudgeOffset(t, nudges) {
       const endX = (slotRect.left + slotRect.width/2) - fieldRect.left;
       const endY = fieldEl.clientHeight - 34;
 
-// animate (plinko-ish wobble, still lands in chosen slot)
-const duration = 1150; // ms
+// animate (slower + peg-row bounces, still lands in chosen slot)
+const duration = 2400; // slower, plinko feel
 const start = performance.now();
+
 const startX = fieldEl.clientWidth * 0.5;
 const startY = 14;
 
-const nudges = makeNudges(3); // uses helper you added
+// rails
+const minX = 18;
+const maxX = fieldEl.clientWidth - 18;
+
+// peg-row waypoints
+const rows = 10;
+const topPad = 50;
+const bottomPad = 70;
+const usableH = fieldEl.clientHeight - topPad - bottomPad;
+
+const points = [];
+points.push({ x: startX, y: startY });
+
+for (let r = 1; r <= rows; r++) {
+  const t = r / rows;
+  const targetX = lerp(startX, endX, t);
+  const kick = (1 - t) * (40 + Math.random() * 30);
+  const dir = Math.random() < 0.5 ? -1 : 1;
+
+  const x = clamp(
+    targetX + dir * kick + (Math.random() * 20 - 10),
+    minX,
+    maxX
+  );
+
+  const y = topPad + t * usableH;
+  points.push({ x, y });
+}
+
+points.push({ x: clamp(endX, minX, maxX), y: endY });
 
 ball.style.transition = 'none';
 
+function easeOutBack(t){
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+}
+
 function tick(now){
   const t = clamp((now - start) / duration, 0, 1);
-  const e = easeInOutCubic(t);
+  const segCount = points.length - 1;
+  const segFloat = t * segCount;
+  const seg = Math.min(segCount - 1, Math.floor(segFloat));
+  const localT = segFloat - seg;
 
-  // base path toward end point
-  const baseX = lerp(startX, endX, e);
-  const baseY = lerp(startY, endY, e);
+  const p0 = points[seg];
+  const p1 = points[seg + 1];
 
-  // sideways wobble that fades out as it nears the bottom
-  const wobble = nudgeOffset(t, nudges) * (1 - t);
+  const x = lerp(p0.x, p1.x, easeOutBack(localT));
+  const y = lerp(p0.y, p1.y, localT);
 
-  // apply
-  ball.style.left = `${baseX + wobble}px`;
-  ball.style.top  = `${baseY}px`;
+  ball.style.left = `${x}px`;
+  ball.style.top  = `${y}px`;
 
-  if (t < 1) {
-    requestAnimationFrame(tick);
-  }
+  if (t < 1) requestAnimationFrame(tick);
 }
+
+requestAnimationFrame(tick);
 
 requestAnimationFrame(tick);
 

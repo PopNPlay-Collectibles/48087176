@@ -280,7 +280,10 @@
       position: relative;
       overflow: hidden;
       transition: transform .15s ease, background .15s ease, color .15s ease, box-shadow .15s ease;
-    }
+    .slot.selected {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 0 0 2px rgba(255, 215, 128, .55), 0 10px 30px rgba(0,0,0,.35);
+}
 
     .slot::after{
       content:"";
@@ -370,6 +373,19 @@
     const dropBtn = document.getElementById('dropBtn');
     const ball = document.getElementById('ball');
     const slotEls = [...document.querySelectorAll('.slot')];
+    let selectedSlot = null;
+
+// allow player to click a slot number to select it
+slotEls.forEach((el) => {
+  el.style.cursor = 'pointer';
+  el.addEventListener('click', () => {
+    selectedSlot = Number(el.dataset.slot);
+
+    // optional: visually show selection
+    slotEls.forEach(s => s.classList.remove('selected'));
+    el.classList.add('selected');
+  });
+});
 // ---------- Step 2: Plinko-style motion helpers ----------
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -448,7 +464,9 @@ function nudgeOffset(t, nudges) {
       animating = true;
       clearActiveSlots();
 
-      const slot = pickSlot();
+      const slot = selectedSlot ?? pickSlot();
+selectedSlot = null; // reset after each drop
+slotEls.forEach(s => s.classList.remove('selected'));
 
       // start ball near top center
       ball.style.opacity = '1';

@@ -486,7 +486,7 @@ points.push({ x: startX, y: startY });
 for (let r = 1; r <= rows; r++) {
   const t = r / rows;
   const targetX = lerp(startX, endX, t);
-  const kick = (1 - t) * (40 + Math.random() * 30);
+  const kick = (1 - t) * (22 + Math.random() * 18);
   const dir = Math.random() < 0.5 ? -1 : 1;
 
   const x = clamp(
